@@ -30,7 +30,7 @@ db = {
         "full_name":"Test first",
         "email":"t@gmail.com",
         "hashed_password":"$2b$12$2LdLbIGcAx2tbXRuy75inOAd25axymeWcZboV1xAZY0IgMuHFsT3m",
-        "disable":False,
+        "disabled":False,
     }
 }
 
