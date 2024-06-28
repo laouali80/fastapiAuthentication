@@ -6,7 +6,7 @@ from jose import JWTError, jwt
 
 # HARSHING PASSWORD
 from passlib.context import CryptContext
-from models import UserInDB, TokenData, Token, User
+from models import UserInDB, TokenData, Token, User, CreateUser
 from dotenv import load_dotenv
 import os
 load_dotenv()
@@ -26,11 +26,11 @@ oauth_2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 db = {
     "test":{
-        "username":"test",
-        "full_name":"Test first",
-        "email":"t@gmail.com",
-        "hashed_password":"$2b$12$2LdLbIGcAx2tbXRuy75inOAd25axymeWcZboV1xAZY0IgMuHFsT3m",
-        "disabled":False,
+        "username": "test",
+        "full_name": "Test first",
+        "email": "t@gmail.com",
+        "hashed_password": "$2b$12$2LdLbIGcAx2tbXRuy75inOAd25axymeWcZboV1xAZY0IgMuHFsT3m",
+        "disabled": True,
     }
 }
 
@@ -164,6 +164,42 @@ async def read_own_items(current_user: User = Depends(get_current_active_user)):
         "owner":current_user
         }]
 
+
+@app.post("/create")
+async def create_user(userData: CreateUser):
+    """To create a user."""
+
+    if not userData.username or not userData.full_name or not userData.email:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
+                            detail="Please fill the form correctly.")
+    if len(userData.username) < 3 or len(userData.full_name) < 3:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
+                    detail="Please the length of username and full name must be greater than 3.")
+    
+    if "@gmail.com" not in userData.email:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
+                    detail="Please your email must contain @gmail.com.")
+    
+    if userData.password != userData.confirm_password:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
+            detail="Unmatch passwords !! Please your password and confirm passwordmust be the same.")
+
+    # query to db for a unique username
+    for user in db:
+        
+        if user == userData.username:    
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
+                detail="Username already exist!! Please choose another username.")
+        
+    db[userData.username] = {
+        "username": userData.username,
+        "full_name": userData.full_name,
+        "email": userData.email,
+        "hashed_password": get_password_hash(userData.password),
+        "disabled":False,
+    }
+
+    return db[userData.username]
     
 # pwd = get_password_hash("test1234")
 # print("here: ",pwd)
